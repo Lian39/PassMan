@@ -4,7 +4,7 @@ import unittest
 from passman import pass_gen
 
 
-def strong_check(password):
+def secure_check(password):
     length_check = len(password) > 8
     digits_check = re.search(r"\d", password) is not None
     lowercase_check = re.search(r"[a-z]", password) is not None
@@ -18,10 +18,10 @@ def strong_check(password):
 
 class PassGenTest(unittest.TestCase):
     def test_pass_gen_1(self):
-        self.assertEqual(strong_check(pass_gen(10)), True)
+        self.assertEqual(secure_check(pass_gen(10)), True)
     
     def test_pass_gen_2(self):
-        self.assertEqual(strong_check(pass_gen(20)), True)
+        self.assertEqual(secure_check(pass_gen(20)), True)
 
 
 if __name__ == '__main__':
