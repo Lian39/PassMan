@@ -1,7 +1,7 @@
 # Password Manager
 ## Password Manager with vault
 
-PassMan is a secure vault with your logins and passwords in it. This tool intended to manage all of your logins and passwords with ease. It's also has such features as secure password generator and passwords health check.
+PassMan is a secure vault with your logins and passwords in it. This tool is intended to manage all of your logins and passwords with ease. It also has such features as secure password generator and passwords health check.
 
 Complete list of options:
 
