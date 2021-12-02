@@ -31,7 +31,7 @@ def add_entry(conn, url, login, encrypted_password):
         try:
             cur.execute("""INSERT INTO vault (url, login, password) VALUES (%s, %s, %s)""", (url, login, encrypted_password))
         except Exception as _exc:
-            print("[INFO] An error occurred while adding password into vault")
+            print("[INFO] An error occurred while adding password into vault", _exc)
 
             sys.exit()
             
@@ -49,7 +49,7 @@ def get_entry(conn, url, salt, master_password, urls):
                 encrypted_password = data[2]
                 decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
             except Exception as _exc:
-                print("[INFO] An error occurred while getting entry from vault")
+                print("[INFO] An error occurred while getting entry from vault", _exc)
 
                 sys.exit()
 
@@ -66,7 +66,7 @@ def get_all_entries(conn, salt, master_password):
 
             data = cur.fetchall()
         except Exception as _exc:
-            print("[INFO] An error occurred while getting entries from vault")
+            print("[INFO] An error occurred while getting entries from vault", _exc)
 
             sys.exit()
 
@@ -84,7 +84,7 @@ def delete_entry(conn, url, urls):
             try:
                 cur.execute("""DELETE FROM vault where url = %s""", (url,))
             except Exception as _exc:
-                print("[INFO] An error occurred while deleting entry from vault")
+                print("[INFO] An error occurred while deleting entry from vault", _exc)
 
                 sys.exit()
             
@@ -100,7 +100,7 @@ def update_url(conn, new_url, old_url, urls):
             try:
                 cur.execute("""UPDATE vault SET url = %s WHERE url = %s""", (new_url, old_url))
             except Exception as _exc:
-                print("[INFO] An error occurred while updating URL")
+                print("[INFO] An error occurred while updating URL", _exc)
 
                 sys.exit()
 
@@ -116,7 +116,7 @@ def update_login(conn, url, new_login, urls):
             try:
                 cur.execute("""UPDATE vault SET login = %s WHERE url = %s""", (new_login, url))
             except Exception as _exc:
-                print("[INFO] An error occurred while updating login")
+                print("[INFO] An error occurred while updating login", _exc)
 
                 sys.exit()
 
@@ -132,7 +132,7 @@ def update_password(conn, url, encrypted_new_password, urls):
             try:
                 cur.execute("""UPDATE vault SET password = %s WHERE url = %s""", (encrypted_new_password, url))
             except Exception as _exc:
-                print("[INFO] An error occurred while updating password")
+                print("[INFO] An error occurred while updating password", _exc)
 
                 sys.exit()
 
@@ -150,7 +150,7 @@ def create_vault(conn):
                                 login varchar(255),
                                 password varchar(255));""")
         except Exception as _exc:
-            print("[INFO] An error occurred while creating vault")
+            print("[INFO] An error occurred while creating vault", _exc)
 
             sys.exit()
 
@@ -163,7 +163,7 @@ def delete_vault(conn):
         try:
             cur.execute("""DROP TABLE vault""")
         except Exception as _exc:
-            print("[INFO] An error occurred while deleting vault")
+            print("[INFO] An error occurred while deleting vault", _exc)
 
             sys.exit()
 
@@ -188,7 +188,7 @@ def get_urls_and_passwords(conn, salt, master_password):
 
             data = cur.fetchall()
     except Exception as _exc:
-        print("[INFO] An error occurred while getting logins and passwords from vault")
+        print("[INFO] An error occurred while getting logins and passwords from vault", _exc)
 
         sys.exit()
     
