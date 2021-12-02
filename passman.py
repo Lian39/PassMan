@@ -271,7 +271,7 @@ def parse_args(argv):
     parser.add_argument("-uu", "--update_url", type=str, nargs=2, help="Update an URL", metavar=("[OLD_URL]", "[NEW_URL]"))
     parser.add_argument("-ul", "--update_login", type=str, nargs=2, help="Update a login in account", metavar=("[URL]", "[NEW_login]")) 
     parser.add_argument("-up", "--update_password", type=str, nargs=2, help="Update a password in account", metavar=("[URL]", "[NEW_PASSWORD]"))
-    parser.add_argument('-gp', '--generate_password', type=str, nargs=1, help="Generate strong password", metavar=("[LENGTH]"))
+    parser.add_argument('-gp', '--generate_password', type=str, nargs=1, help="Generate secure password", metavar=("[LENGTH]"))
     parser.add_argument("-hc", "--health_check", action='store_true', help="Check passwords health")
     parser.add_argument("-cv", "--create_vault", action='store_true', help="Create vault")
     parser.add_argument("-dv", "--delete_vault", action='store_true', help="Delete vault")
