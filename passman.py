@@ -277,8 +277,7 @@ def parse_config():
 
 def main():
     """Main function"""
-    # master_password = getpass.getpass(prompt="Enter Master Password: ")
-    master_password = 'MyMasterPassword'
+    master_password = getpass.getpass(prompt="Enter Master Password: ")
 
     args = parse_args(sys.argv)
 
