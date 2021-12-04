@@ -31,11 +31,9 @@ def add_entry(conn, url, login, encrypted_password):
         try:
             cur.execute("""INSERT INTO vault (url, login, password) VALUES (%s, %s, %s)""", (url, login, encrypted_password))
         except Exception as _exc:
-            print("[INFO] An error occurred while adding password into vault", _exc)
-
-            sys.exit()
-            
-    print("[INFO] Data was successfully added")
+            return f"[INFO] An error occurred while adding password into vault ({_exc})"
+        
+    return "[INFO] Data was successfully added"
 
 
 def get_entry(conn, url, salt, master_password, urls):
@@ -49,13 +47,11 @@ def get_entry(conn, url, salt, master_password, urls):
                 encrypted_password = data[2]
                 decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
             except Exception as _exc:
-                print("[INFO] An error occurred while getting entry from vault", _exc)
+                return f"[INFO] An error occurred while getting entry from vault ({_exc})"
 
-                sys.exit()
-
-        print(f"URL: {data[0]}, login: {data[1]}, Password: {decrypted_password}")
+        return f"URL: {data[0]}, login: {data[1]}, Password: {decrypted_password}"
     else:
-        print("[INFO] No such url in vault")
+        return "[INFO] No such url in vault"
 
 
 def get_all_entries(conn, salt, master_password):
@@ -66,15 +62,13 @@ def get_all_entries(conn, salt, master_password):
 
             data = cur.fetchall()
         except Exception as _exc:
-            print("[INFO] An error occurred while getting entries from vault", _exc)
-
-            sys.exit()
+            return f"[INFO] An error occurred while getting entries from vault ({_exc})"
 
     for i in range(len(data)):
         encrypted_password = data[i][2]
         decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
 
-        print(f"URL: {data[i][0]}, login: {data[i][1]}, Password: {decrypted_password}")
+        return f"URL: {data[i][0]}, login: {data[i][1]}, Password: {decrypted_password}"
 
 
 def delete_entry(conn, url, urls):
@@ -84,13 +78,11 @@ def delete_entry(conn, url, urls):
             try:
                 cur.execute("""DELETE FROM vault where url = %s""", (url,))
             except Exception as _exc:
-                print("[INFO] An error occurred while deleting entry from vault", _exc)
+                return f"[INFO] An error occurred while deleting entry from vault ({_exc})"
 
-                sys.exit()
-            
-        print("[INFO] Data was successfully deleted")
+        return "[INFO] Data was successfully deleted"
     else:
-        print("[INFO] No such url in vault")
+        return "[INFO] No such url in vault"
 
 
 def update_url(conn, new_url, old_url, urls):
@@ -100,13 +92,11 @@ def update_url(conn, new_url, old_url, urls):
             try:
                 cur.execute("""UPDATE vault SET url = %s WHERE url = %s""", (new_url, old_url))
             except Exception as _exc:
-                print("[INFO] An error occurred while updating URL", _exc)
+                return f"[INFO] An error occurred while updating URL ({_exc})"
 
-                sys.exit()
-
-        print("[INFO] URL was successfully updated")
+        return "[INFO] URL was successfully updated"
     else:
-        print("[INFO] No such url in vault")
+        return "[INFO] No such url in vault"
 
 
 def update_login(conn, url, new_login, urls):
@@ -116,13 +106,11 @@ def update_login(conn, url, new_login, urls):
             try:
                 cur.execute("""UPDATE vault SET login = %s WHERE url = %s""", (new_login, url))
             except Exception as _exc:
-                print("[INFO] An error occurred while updating login", _exc)
+                return f"[INFO] An error occurred while updating login ({_exc})"
 
-                sys.exit()
-
-        print("[INFO] login was successfully updated")
+        return "[INFO] login was successfully updated"
     else:
-        print("[INFO] No such url in vault")
+        return "[INFO] No such url in vault"
 
 
 def update_password(conn, url, encrypted_new_password, urls):
@@ -132,13 +120,11 @@ def update_password(conn, url, encrypted_new_password, urls):
             try:
                 cur.execute("""UPDATE vault SET password = %s WHERE url = %s""", (encrypted_new_password, url))
             except Exception as _exc:
-                print("[INFO] An error occurred while updating password", _exc)
+                return f"[INFO] An error occurred while updating password ({_exc})"
 
-                sys.exit()
-
-        print("[INFO] Password was successfully updated")
+        return "[INFO] Password was successfully updated"
     else:
-        print("[INFO] No such url in vault")
+        return "[INFO] No such url in vault"
 
 
 def create_vault(conn):
@@ -150,11 +136,9 @@ def create_vault(conn):
                                 login varchar(255),
                                 password varchar(255));""")
         except Exception as _exc:
-            print("[INFO] An error occurred while creating vault", _exc)
+            return f"[INFO] An error occurred while creating vault ({_exc})"
 
-            sys.exit()
-
-    print("[INFO] Vault was successfully created")
+    return "[INFO] Vault was successfully created"
 
 
 def delete_vault(conn):
@@ -163,11 +147,9 @@ def delete_vault(conn):
         try:
             cur.execute("""DROP TABLE vault""")
         except Exception as _exc:
-            print("[INFO] An error occurred while deleting vault", _exc)
+            return f"[INFO] An error occurred while deleting vault ({_exc})"
 
-            sys.exit()
-
-    print("[INFO] Vault was successfully deleted")
+    return "[INFO] Vault was successfully deleted"
 
 
 def pass_gen(password_length):
@@ -188,9 +170,7 @@ def get_urls_and_passwords(conn, salt, master_password):
 
             data = cur.fetchall()
     except Exception as _exc:
-        print("[INFO] An error occurred while getting logins and passwords from vault", _exc)
-
-        sys.exit()
+        return f"[INFO] An error occurred while getting logins and passwords from vault ({_exc})"
     
     for entry in data:
         url, encrypted_password = entry[0], entry[1]
@@ -292,7 +272,8 @@ def parse_config():
 
 def main():
     """Main function"""
-    master_password = getpass.getpass(prompt="Enter Master Password: ")
+    # master_password = getpass.getpass(prompt="Enter Master Password: ")
+    master_password = 'MyMasterPassword'
 
     args = parse_args(sys.argv)
 
@@ -316,43 +297,43 @@ def main():
         url, login, password = args.add[::]
         encrypted_password = encrypt_password(salt, password, master_password)
 
-        add_entry(conn, url, login, encrypted_password)
+        print(add_entry(conn, url, login, encrypted_password))
         
     if args.get:
         url = args.get[0]
 
-        get_entry(conn, url, salt, master_password, urls)
+        print(get_entry(conn, url, salt, master_password, urls))
 
     if args.get_all:
-        get_all_entries(conn, salt, master_password)
+        print(get_all_entries(conn, salt, master_password))
 
     if args.delete:
         url = args.delete[0]
 
-        delete_entry(conn, url, urls)
+        print(delete_entry(conn, url, urls))
 
     if args.update_url:
         old_url, new_url = args.update_url[::]
 
-        update_url(conn, new_url, old_url, urls)
+        print(update_url(conn, new_url, old_url, urls))
 
     if args.update_login:
         url, new_login = args.update_login[::]
         
-        update_login(conn, url, new_login, urls)
+        print(update_login(conn, url, new_login, urls))
 
     if args.update_password:
         url, new_password = args.update_password[::]
 
         encrypted_new_password = encrypt_password(salt, new_password, master_password)
 
-        update_password(conn, url, encrypted_new_password, urls)
+        print(update_password(conn, url, encrypted_new_password, urls))
 
     if args.create_vault:
-        create_vault(conn)
+        print(create_vault(conn))
 
     if args.delete_vault:
-        delete_vault(conn)
+        print(delete_vault(conn))
 
     if args.generate_password:
         password_length = int(args.generate_password[0])
