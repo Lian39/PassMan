@@ -17,11 +17,16 @@ def connect(db_host, db_name, db_user, master_password):
     """Connecting to database"""
     db_password = master_password
 
-    conn = psycopg2.connect(
-                    dbname=db_name, 
-                    user=db_user, 
-                    password=db_password, 
-                    host=db_host)
+    try:
+        conn = psycopg2.connect(
+                        dbname=db_name, 
+                        user=db_user, 
+                        password=db_password, 
+                        host=db_host)
+    except Exception as _exc:
+        print("[INFO] Unable to connect to database", _exc)
+        sys.exit()
+
     return conn
 
 
@@ -272,7 +277,8 @@ def parse_config():
 
 def main():
     """Main function"""
-    master_password = getpass.getpass(prompt="Enter Master Password: ")
+    # master_password = getpass.getpass(prompt="Enter Master Password: ")
+    master_password = 'MyMasterPassword'
 
     args = parse_args(sys.argv)
 
@@ -281,10 +287,7 @@ def main():
 
     salt = b'mysalt'
 
-    try:
-        conn = connect(db_host, db_name, db_user, master_password)
-    except Exception as _exc:
-        print("[INFO] Unable to connect to database", _exc)
+    conn = connect(db_host, db_name, db_user, master_password)
 
     conn.autocommit = True
 
