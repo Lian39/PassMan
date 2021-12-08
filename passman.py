@@ -171,7 +171,7 @@ def pass_gen(password_length):
 
 
 def get_table_names(conn):
-    """Getting tables from database"""
+    """Getting table names from database"""
     table_names = []
 
     with conn.cursor() as cur:
