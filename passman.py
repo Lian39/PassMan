@@ -381,5 +381,6 @@ def main():
         else:
             print("No accounts with weak passwords")
 
+
 if __name__ == '__main__':
     main()
