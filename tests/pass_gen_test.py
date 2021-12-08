@@ -1,8 +1,6 @@
 import re
-import sys
 import unittest
 from passman import pass_gen
-
 
 def secure_check(password):
     length_check = len(password) > 8

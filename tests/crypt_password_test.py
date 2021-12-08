@@ -1,4 +1,3 @@
-import sys
 import unittest
 from passman import encrypt_password, decrypt_password
 

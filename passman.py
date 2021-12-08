@@ -1,4 +1,3 @@
-import os
 import re
 import sys
 import string
@@ -54,7 +53,7 @@ def get_entry(conn, url, salt, master_password, urls):
             except Exception as _exc:
                 return f"[INFO] An error occurred while getting entry from vault ({_exc})"
 
-        return f"URL: {data[0]}, login: {data[1]}, Password: {decrypted_password}"
+        return f"URL: {data[0]}, login: {data[1]}, password: {decrypted_password}"
     else:
         return "[INFO] No such url in vault"
 
@@ -73,7 +72,7 @@ def get_all_entries(conn, salt, master_password):
         encrypted_password = data[i][2]
         decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
 
-        return f"URL: {data[i][0]}, login: {data[i][1]}, Password: {decrypted_password}"
+        return f"URL: {data[i][0]}, login: {data[i][1]}, password: {decrypted_password}"
 
 
 def delete_entry(conn, url, urls):
@@ -132,29 +131,35 @@ def update_password(conn, url, encrypted_new_password, urls):
         return "[INFO] No such url in vault"
 
 
-def create_vault(conn):
+def create_vault(conn, table_names):
     """Creating database table (vault)"""
-    with conn.cursor() as cur:
-        try:
-            cur.execute("""CREATE TABLE vault(
-                                url varchar(255),
-                                login varchar(255),
-                                password varchar(255));""")
-        except Exception as _exc:
-            return f"[INFO] An error occurred while creating vault ({_exc})"
+    if len(table_names) == 0:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""CREATE TABLE vault(
+                                    url varchar(255),
+                                    login varchar(255),
+                                    password varchar(255));""")
+            except Exception as _exc:
+                return f"[INFO] An error occurred while creating vault ({_exc})"
 
-    return "[INFO] Vault was successfully created"
+        return "[INFO] Vault was successfully created"
+    else:
+        return "[INFO] Vault already exists"
 
 
-def delete_vault(conn):
+def delete_vault(conn, table_names):
     """Deleting database table (vault)"""
-    with conn.cursor() as cur:
-        try:
-            cur.execute("""DROP TABLE vault""")
-        except Exception as _exc:
-            return f"[INFO] An error occurred while deleting vault ({_exc})"
+    if len(table_names) > 0:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""DROP TABLE vault""")
+            except Exception as _exc:
+                return f"[INFO] An error occurred while deleting vault ({_exc})"
 
-    return "[INFO] Vault was successfully deleted"
+        return "[INFO] Vault was successfully deleted"
+    else:
+        return "[INFO] No vault was found"
 
 
 def pass_gen(password_length):
@@ -163,6 +168,23 @@ def pass_gen(password_length):
     password = ''.join(secrets.choice(symbols) for i in range(password_length))
 
     return password
+
+
+def get_table_names(conn):
+    """Getting tables from database"""
+    table_names = []
+
+    with conn.cursor() as cur:
+        try:
+            cur.execute("""SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'""")
+            tables = cur.fetchall()
+        except Exception as _exc:
+            return "[INFO] An error occurred while getting tables"
+        
+    for table in range(len(tables)):
+        table_names.append(tables[table][1])
+    
+    return table_names
 
 
 def get_urls_and_passwords(conn, salt, master_password):
@@ -186,8 +208,7 @@ def get_urls_and_passwords(conn, salt, master_password):
 
 
 def health_check(passwords, urls_and_passwords):
-    """Check passwords health"""
-
+    """Checking passwords health"""
     reused_passwords_accounts = []
     weak_passwords_accounts = []
 
@@ -290,9 +311,12 @@ def main():
 
     conn.autocommit = True
 
-    urls_and_passwords = get_urls_and_passwords(conn, salt, master_password)
-    passwords = [passwd for passwd in urls_and_passwords.values()]
-    urls = [url for url in urls_and_passwords.keys()]
+    table_names =  get_table_names(conn)
+
+    if len(table_names) > 0:
+        urls_and_passwords = get_urls_and_passwords(conn, salt, master_password)
+        passwords = [passwd for passwd in urls_and_passwords.values()]
+        urls = [url for url in urls_and_passwords.keys()]
 
     if args.add:
         url, login, password = args.add[::]
@@ -331,10 +355,10 @@ def main():
         print(update_password(conn, url, encrypted_new_password, urls))
 
     if args.create_vault:
-        print(create_vault(conn))
+        print(create_vault(conn, table_names))
 
     if args.delete_vault:
-        print(delete_vault(conn))
+        print(delete_vault(conn, table_names))
 
     if args.generate_password:
         password_length = int(args.generate_password[0])
@@ -356,7 +380,6 @@ def main():
             print(*weak_passwords_accounts, sep=', ')
         else:
             print("No accounts with weak passwords")
-
 
 if __name__ == '__main__':
     main()

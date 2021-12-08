@@ -1,4 +1,3 @@
-import sys
 import unittest
 from passman import get_hash
 

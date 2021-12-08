@@ -1,4 +1,3 @@
-import sys
 import unittest
 from passman import health_check
 
