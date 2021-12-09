@@ -254,9 +254,7 @@ def import_items(conn, items, path):
     with conn.cursor() as cur:
         try:
             for item in items:
-                url = item[0]
-                login = item[1]
-                password = item[2]
+                url, login, password = item[::]
                 cur.execute("""INSERT INTO vault (url, login, password) VALUES (%s, %s, %s)""", (url, login, password))
         except Exception as _exc:
             return f"[INFO] An error occurred while adding password into vault ({_exc})"
