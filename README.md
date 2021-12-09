@@ -5,30 +5,32 @@ PassMan is a secure vault with your logins and passwords in it. This tool is int
 
 Complete list of options:
 
-- -a : add a new entry into the vault
-- -d : delete an entry from vault
-- -g : get an entry from vault
-- -ga : get all entries from vault
+- -a : add a new item into the vault
+- -d : delete an item from vault
+- -g : get an item from vault
+- -ga : get all items from vault
 - -uu : update url
 - -ul : update login
 - -up : update password
 - -gp : generate secure password
 - -hc : check passwords health
+- -i : import items
+- e : export items
 
 ## Examples:
-### Adding a new entry into the vault:
+### Adding a new item into the vault:
 ```
 python passman.py -a <url> <login> <password>
 ```
-### Deleting an entry from vault:
+### Deleting an item from vault:
 ```
 python passman.py -d <url>
 ```
-### Getting an entry from vault:
+### Getting an item from vault:
 ```
 python passman.py -g <url>
 ```
-### Getting all entries from vault:
+### Getting all items from vault:
 ```
 python passman.py -ga
 ```
@@ -51,4 +53,12 @@ python passman.py -gp <length>
 ### Checking passwords health:
 ```
 python passman.py -hc
+```
+### Importing items from a csv file:
+```
+pytohn passman.py -i <path_to_csv_file>
+```
+### Exporting items to a csv file:
+```
+pytohn passman.py -i <path_to_csv_file>
 ```

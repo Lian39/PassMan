@@ -1,5 +1,6 @@
 import re
 import sys
+import csv
 import string
 import secrets
 import getpass
@@ -29,8 +30,8 @@ def connect(db_host, db_name, db_user, master_password):
     return conn
 
 
-def add_entry(conn, url, login, encrypted_password):
-    """Add entry(url, login, password) into vault"""
+def add_item(conn, url, login, encrypted_password):
+    """Add item(url, login, password) into vault"""
     with conn.cursor() as cur:
         try:
             cur.execute("""INSERT INTO vault (url, login, password) VALUES (%s, %s, %s)""", (url, login, encrypted_password))
@@ -40,95 +41,88 @@ def add_entry(conn, url, login, encrypted_password):
     return "[INFO] Data was successfully added"
 
 
-def get_entry(conn, url, salt, master_password, urls):
-    """Getting an entry from vault by url"""
-    if url in urls:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("""SELECT * FROM vault WHERE url = %s""", (url,))
+def get_item(conn, url, salt, master_password):
+    """Getting an item from vault by url"""
+    items = []
 
-                data = cur.fetchone()
-                encrypted_password = data[2]
-                decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
-            except Exception as _exc:
-                return f"[INFO] An error occurred while getting entry from vault ({_exc})"
+    with conn.cursor() as cur:
+        try:
+            cur.execute("""SELECT * FROM vault WHERE url = %s""", (url,))
+            data = cur.fetchall()
+        except Exception as _exc:
+            return f"[INFO] An error occurred while getting item from vault ({_exc})"
 
-        return f"URL: {data[0]}, login: {data[1]}, password: {decrypted_password}"
-    else:
-        return "[INFO] No such url in vault"
+    for item in data:
+        i_url, login, encrypted_password = item[::]
+        decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
+
+        items.append([i_url, login, decrypted_password])
+
+    return items
 
 
-def get_all_entries(conn, salt, master_password):
-    """Getting all entries from vault"""
+def get_all_items(conn, salt, master_password):
+    """Getting all items from vault"""
+    items = []
+
     with conn.cursor() as cur:
         try:
             cur.execute("""SELECT * FROM vault""")
-
             data = cur.fetchall()
         except Exception as _exc:
-            return f"[INFO] An error occurred while getting entries from vault ({_exc})"
+            return f"[INFO] An error occurred while getting items from vault ({_exc})"
 
     for i in range(len(data)):
-        encrypted_password = data[i][2]
+        url, login, encrypted_password = data[i][::]
         decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
 
-        return f"URL: {data[i][0]}, login: {data[i][1]}, password: {decrypted_password}"
+        items.append([url, login, decrypted_password])
+
+    return items
 
 
-def delete_entry(conn, url, urls):
-    """Deleting entry from vault"""
-    if url in urls:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("""DELETE FROM vault where url = %s""", (url,))
-            except Exception as _exc:
-                return f"[INFO] An error occurred while deleting entry from vault ({_exc})"
+def delete_item(conn, url):
+    """Deleting item from vault"""
+    with conn.cursor() as cur:
+        try:
+            cur.execute("""DELETE FROM vault where url = %s""", (url,))
+        except Exception as _exc:
+            return f"[INFO] An error occurred while deleting item from vault ({_exc})"
 
-        return "[INFO] Data was successfully deleted"
-    else:
-        return "[INFO] No such url in vault"
+    return "[INFO] Data was successfully deleted"
 
 
-def update_url(conn, new_url, old_url, urls):
-    """Updating entry's url"""
-    if old_url in urls:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("""UPDATE vault SET url = %s WHERE url = %s""", (new_url, old_url))
-            except Exception as _exc:
-                return f"[INFO] An error occurred while updating URL ({_exc})"
+def update_url(conn, new_url, old_url):
+    """Updating item's url"""
+    with conn.cursor() as cur:
+        try:
+            cur.execute("""UPDATE vault SET url = %s WHERE url = %s""", (new_url, old_url))
+        except Exception as _exc:
+            return f"[INFO] An error occurred while updating URL ({_exc})"
 
-        return "[INFO] URL was successfully updated"
-    else:
-        return "[INFO] No such url in vault"
+    return "[INFO] URL was successfully updated"
 
 
-def update_login(conn, url, new_login, urls):
-    """Updating entry's login"""
-    if url in urls:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("""UPDATE vault SET login = %s WHERE url = %s""", (new_login, url))
-            except Exception as _exc:
-                return f"[INFO] An error occurred while updating login ({_exc})"
+def update_login(conn, url, new_login):
+    """Updating item's login"""
+    with conn.cursor() as cur:
+        try:
+            cur.execute("""UPDATE vault SET login = %s WHERE url = %s""", (new_login, url))
+        except Exception as _exc:
+            return f"[INFO] An error occurred while updating login ({_exc})"
 
-        return "[INFO] login was successfully updated"
-    else:
-        return "[INFO] No such url in vault"
+    return "[INFO] login was successfully updated"
 
 
-def update_password(conn, url, encrypted_new_password, urls):
-    """Updating entry's password"""
-    if url in urls:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("""UPDATE vault SET password = %s WHERE url = %s""", (encrypted_new_password, url))
-            except Exception as _exc:
-                return f"[INFO] An error occurred while updating password ({_exc})"
+def update_password(conn, url, encrypted_new_password):
+    """Updating item's password"""
+    with conn.cursor() as cur:
+        try:
+            cur.execute("""UPDATE vault SET password = %s WHERE url = %s""", (encrypted_new_password, url))
+        except Exception as _exc:
+            return f"[INFO] An error occurred while updating password ({_exc})"
 
-        return "[INFO] Password was successfully updated"
-    else:
-        return "[INFO] No such url in vault"
+    return "[INFO] Password was successfully updated"
 
 
 def create_vault(conn, table_names):
@@ -199,8 +193,8 @@ def get_urls_and_passwords(conn, salt, master_password):
     except Exception as _exc:
         return f"[INFO] An error occurred while getting logins and passwords from vault ({_exc})"
     
-    for entry in data:
-        url, encrypted_password = entry[0], entry[1]
+    for item in data:
+        url, encrypted_password = item[::]
         decrypted_password = decrypt_password(salt, encrypted_password, master_password).decode('utf-8')
         urls_and_passwords[url] = decrypted_password
 
@@ -227,6 +221,54 @@ def health_check(passwords, urls_and_passwords):
             weak_passwords_accounts.append(url)
 
     return reused_passwords_accounts, weak_passwords_accounts
+
+
+def read_csv_file(path):
+    """Reading a csv file"""
+    data = []
+
+    with open(path, encoding='utf-8', newline='') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        for row in reader:
+            url = row["name"]
+            login = row["username"]
+            password = row["password"]
+            data.append([url, login, password])
+
+    return data
+
+
+def write_csv_file(path, items):
+    """Writng a csv file"""
+    with open(path, "w", newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        col1, col2, col3 = "url", "login", "password"
+        writer.writerow([col1, col2, col3])
+        for item in items:
+            url, login, password = item[::]
+            writer.writerow([url, login, password])
+
+
+def import_items(conn, items, path):
+    """Importing items into vault from a csv file"""
+    with conn.cursor() as cur:
+        try:
+            for item in items:
+                url = item[0]
+                login = item[1]
+                password = item[2]
+                cur.execute("""INSERT INTO vault (url, login, password) VALUES (%s, %s, %s)""", (url, login, password))
+        except Exception as _exc:
+            return f"[INFO] An error occurred while adding password into vault ({_exc})"
+        
+    return f"[INFO] Data was successfully imported from {path}"
+        
+
+def export_items(path, items):
+    """Exporting items from vault into a csv file"""
+    write_csv_file(path, items)
+
+    return f"[INFO] data was successfully exported into {path}"
 
 
 def get_hash(master_password):
@@ -270,15 +312,17 @@ def decrypt_password(salt, password_to_decrypt, master_password):
 def parse_args(argv):
     """Parsing arguments from command prompt"""
     parser = argparse.ArgumentParser(description='Run password manager vault')
-    parser.add_argument("-a", "--add", type=str, nargs=3, help="Add a new entry into the vault", metavar=("[URL]", "[login]", "[PASSWD]"))
-    parser.add_argument("-g", "--get", type=str, nargs = 1, help="Get an entry by URL from vault", metavar=("[URL]"))
-    parser.add_argument("-d", "--delete", type=str, nargs=1, help="Delete an entry from vault by URL", metavar=("[URL]")) 
+    parser.add_argument("-a", "--add", type=str, nargs=3, help="Add a new item into the vault", metavar=("[URL]", "[login]", "[PASSWD]"))
+    parser.add_argument("-g", "--get", type=str, nargs = 1, help="Get an item by URL from vault", metavar=("[URL]"))
+    parser.add_argument("-d", "--delete", type=str, nargs=1, help="Delete an item from vault by URL", metavar=("[URL]")) 
     parser.add_argument("-ga", "--get_all", action="store_true", help="Get all data from vault")
     parser.add_argument("-uu", "--update_url", type=str, nargs=2, help="Update an URL", metavar=("[OLD_URL]", "[NEW_URL]"))
     parser.add_argument("-ul", "--update_login", type=str, nargs=2, help="Update a login in account", metavar=("[URL]", "[NEW_login]")) 
     parser.add_argument("-up", "--update_password", type=str, nargs=2, help="Update a password in account", metavar=("[URL]", "[NEW_PASSWORD]"))
-    parser.add_argument('-gp', '--generate_password', type=str, nargs=1, help="Generate secure password", metavar=("[LENGTH]"))
+    parser.add_argument('-gp', "--generate_password", type=str, nargs=1, help="Generate secure password", metavar=("[LENGTH]"))
     parser.add_argument("-hc", "--health_check", action='store_true', help="Check passwords health")
+    parser.add_argument('-i', "--import_items", type=str, nargs=1, help="Import items from csv file", metavar=("[PATH]"))
+    parser.add_argument('-e', "--export_items", type=str, nargs=1, help="Export items from csv file", metavar=("[PATH]"))
     parser.add_argument("-cv", "--create_vault", action='store_true', help="Create vault")
     parser.add_argument("-dv", "--delete_vault", action='store_true', help="Delete vault")
     args = parser.parse_args(argv[1:])
@@ -311,54 +355,55 @@ def main():
 
     conn.autocommit = True
 
-    table_names =  get_table_names(conn)
+    table_names = get_table_names(conn)
 
-    if len(table_names) > 0:
-        urls_and_passwords = get_urls_and_passwords(conn, salt, master_password)
-        passwords = [passwd for passwd in urls_and_passwords.values()]
-        urls = [url for url in urls_and_passwords.keys()]
+    if len(table_names) < 1 and not args.create_vault:
+        print("[INFO] Create vault first")
+        sys.exit()
 
     if args.add:
         url, login, password = args.add[::]
         encrypted_password = encrypt_password(salt, password, master_password)
 
-        print(add_entry(conn, url, login, encrypted_password))
+        print(add_item(conn, url, login, encrypted_password))
         
     if args.get:
         url = args.get[0]
+        items = get_item(conn, url, salt, master_password)
 
-        print(get_entry(conn, url, salt, master_password, urls))
+        for item in items:
+            url, login, password = item[::]
+            print(f"URL: {url}, login: {login}, password: {password}")
+        
 
     if args.get_all:
-        print(get_all_entries(conn, salt, master_password))
+        items = get_all_items(conn, salt, master_password)
+        
+        for item in items:
+            url, login, password = item[::]
+            print(f"URL: {url}, login: {login}, password: {password}")
 
     if args.delete:
         url = args.delete[0]
 
-        print(delete_entry(conn, url, urls))
+        print(delete_item(conn, url))
 
     if args.update_url:
         old_url, new_url = args.update_url[::]
 
-        print(update_url(conn, new_url, old_url, urls))
+        print(update_url(conn, new_url, old_url))
 
     if args.update_login:
         url, new_login = args.update_login[::]
         
-        print(update_login(conn, url, new_login, urls))
+        print(update_login(conn, url, new_login))
 
     if args.update_password:
         url, new_password = args.update_password[::]
 
         encrypted_new_password = encrypt_password(salt, new_password, master_password)
 
-        print(update_password(conn, url, encrypted_new_password, urls))
-
-    if args.create_vault:
-        print(create_vault(conn, table_names))
-
-    if args.delete_vault:
-        print(delete_vault(conn, table_names))
+        print(update_password(conn, url, encrypted_new_password))
 
     if args.generate_password:
         password_length = int(args.generate_password[0])
@@ -367,6 +412,8 @@ def main():
         print(password)
     
     if args.health_check:
+        urls_and_passwords = get_urls_and_passwords(conn, salt, master_password)
+        passwords = [passwd for passwd in urls_and_passwords.values()]
         reused_passwords_accounts, weak_passwords_accounts = health_check(passwords, urls_and_passwords)
 
         if len(reused_passwords_accounts) > 0:
@@ -380,6 +427,30 @@ def main():
             print(*weak_passwords_accounts, sep=', ')
         else:
             print("No accounts with weak passwords")
+    
+    if args.import_items:
+        path = args.import_items[0]
+        items = read_csv_file(path)
+
+        for item in items:
+            password = item[2]
+            encrypted_password = encrypt_password(salt, password, master_password)
+            item[2] = encrypted_password
+
+        print(import_items(conn, items, path))
+        
+    if args.export_items:
+        path = args.export_items[0]
+        items = get_all_items(conn, salt, master_password)
+        
+        print(export_items(path, items))
+
+
+    if args.create_vault:
+        print(create_vault(conn, table_names))
+
+    if args.delete_vault:
+        print(delete_vault(conn, table_names))
 
 
 if __name__ == '__main__':
