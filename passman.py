@@ -445,7 +445,6 @@ def main():
         
         print(export_items(path, items))
 
-
     if args.create_vault:
         print(create_vault(conn, table_names))
 
