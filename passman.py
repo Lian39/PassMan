@@ -343,19 +343,15 @@ def main():
     master_password = getpass.getpass(prompt="Enter Master Password: ")
 
     args = parse_args(sys.argv)
-
     settings = parse_config()
     db_host, db_name, db_user = settings[::]
 
-    salt = b'mysalt'
-
     conn = connect(db_host, db_name, db_user, master_password)
-
     conn.autocommit = True
 
     table_names = get_table_names(conn)
 
-    
+    salt = b'mysalt'
 
     if len(table_names) < 1 and not args.create_vault:
         print("[INFO] Create vault first")
