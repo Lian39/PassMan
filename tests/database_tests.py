@@ -1,5 +1,5 @@
 import unittest
-import sys
+from passman import *
 settings = parse_config()
 db_host, db_name, db_user = settings[::]
 
