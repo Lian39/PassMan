@@ -355,6 +355,8 @@ def main():
 
     table_names = get_table_names(conn)
 
+    
+
     if len(table_names) < 1 and not args.create_vault:
         print("[INFO] Create vault first")
         sys.exit()

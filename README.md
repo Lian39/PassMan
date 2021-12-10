@@ -62,3 +62,5 @@ pytohn passman.py -i <path_to_csv_file>
 ```
 pytohn passman.py -i <path_to_csv_file>
 ```
+## Note!
+To use this Password Manager, you have to download PostgreSQL4 first!
