@@ -15,7 +15,7 @@ Complete list of options:
 - -gp : generate secure password
 - -hc : check passwords health
 - -i : import items
-- e : export items
+- -e : export items
 
 ## Examples:
 ### Adding a new item into the vault:
@@ -60,7 +60,7 @@ pytohn passman.py -i <path_to_csv_file>
 ```
 ### Exporting items to a csv file:
 ```
-pytohn passman.py -i <path_to_csv_file>
+pytohn passman.py -e <path_to_csv_file>
 ```
 ## Note!
 To use this Password Manager, you have to download PostgreSQL4 first!
